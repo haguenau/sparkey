@@ -547,20 +547,10 @@ int main(int argc, char * const *argv) {
     opterr = 0;
     optind = 2;
     int opt_char;
-    char delimiter = '\t';
-    while ((opt_char = getopt (argc, argv, "d:")) != -1) {
+    while ((opt_char = getopt (argc, argv, "")) != -1) {
       switch (opt_char) {
-      case 'd':
-        if (strlen(optarg) != 1) {
-          fprintf(stderr, "delimiter must be one character, but was '%s'\n", optarg);
-          return 1;
-        }
-        delimiter = optarg[0];
-        break;
       case '?':
-        if (optopt == 'd') {
-          fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-        } else if (isprint(optopt)) {
+        if (isprint(optopt)) {
           fprintf(stderr, "Unknown option '-%c'.\n", optopt);
         } else {
           fprintf(stderr, "Unknown option character '\\x%x'.\n", optopt);
