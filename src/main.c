@@ -490,6 +490,19 @@ int main(int argc, char * const *argv) {
         return 1;
       }
     }
+
+    if (optind >= argc) {
+      usage_appendlog();
+      return 1;
+    }
+
+    const char *log_filename = argv[optind];
+    sparkey_logwriter *writer;
+    assert(sparkey_logwriter_append(&writer, log_filename));
+    int rc = append(writer, delimiter, stdin);
+    assert(sparkey_logwriter_close(&writer));
+    return rc;
+
   } else if (strcmp(command, "appendlog") == 0) {
     opterr = 0;
     optind = 2;
@@ -520,7 +533,7 @@ int main(int argc, char * const *argv) {
     }
 
     if (optind >= argc) {
-      usage_appendlog();
+      usage_appendbin();
       return 1;
     }
 
