@@ -90,12 +90,13 @@ static void usage_appendlog() {
 static void usage_appendbin() {
   fprintf(stderr,
           "Usage: sparkey appendbin [-d <char>] <file.spl>\n"
-          "  Append data from STDIN to a log file with settings.\n"
-          "  data must be formatted as a sequence of\n"
-          "  +<kl>,<vl>:<k>->v<newline>\n"
+          "  Append cdbmake-formatted data from STDIN to a log file "
+          "with settings.\n"
+          "  Data must be formatted as a sequence of\n"
+          "      + <kl> , <vl> : <key> -> <value> <newline>\n"
           "  where <kl> is the key length in ASCII decimal,\n"
           "  and <vl> is the value length. End of input is marked as\n"
-          "  an extra newline (the file ends with \"\\n\\n\").\n");
+          "  an extra newline (the file normally ends with \"\\n\\n\").\n");
 }
 
 static void usage_rewrite() {
