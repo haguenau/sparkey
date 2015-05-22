@@ -33,18 +33,19 @@
 #define SNAPPY_MIN_BLOCKSIZE (1<<4)
 
 static void usage() {
-  fprintf(stderr, "Usage: sparkey <command> [<args>]\n");
-  fprintf(stderr, "Commands:\n");
-  fprintf(stderr, "  info      - Show information about sparkey files.\n");
-  fprintf(stderr, "  get       - Get the value associated with a key.\n");
-  fprintf(stderr, "  writehash - Generate a hash file from a log file.\n");
-  fprintf(stderr, "  createlog - Create an empty log file.\n");
-  fprintf(stderr, "  appendlog - Append key-value pairs to an existing log file.\n");
-  fprintf(stderr, "  appendbin - Append cdb format to an existing log file.\n");
-  fprintf(stderr, "  rewrite   - Rewrite an existing log/index file pair, "
-                                "trimming away all replaced entries and "
-                                "possibly changing the compression format.\n");
-  fprintf(stderr, "  help      - Show this help text.\n");
+  fprintf(stderr,
+          "Usage: sparkey <command> [<args>]\n"
+          "Commands:\n"
+          "  info      - Show information about sparkey files.\n"
+          "  get       - Get the value associated with a key.\n"
+          "  writehash - Generate a hash file from a log file.\n"
+          "  createlog - Create an empty log file.\n"
+          "  appendlog - Append key-value pairs to an existing log file.\n"
+          "  appendbin - Append cdb format to an existing log file.\n"
+          "  rewrite   - Rewrite an existing log/index file pair, "
+          "trimming away all replaced entries and "
+          "possibly changing the compression format.\n"
+          "  help      - Show this help text.\n");
 }
 
 static void usage_info() {
