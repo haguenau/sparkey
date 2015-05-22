@@ -284,10 +284,9 @@ static int appendbin(sparkey_logwriter *writer) {
        - check for \n
        - write record
      */
-    size_t record_start = 0, value_start, key_start;
+    size_t record_start = 0;
     size_t key_length = 0, value_length = 0;
 
-    value_start = key_start = value_length = key_length = 1;
     while (1) {
         if (input[record_start] == '\n' && record_start == length - 1) {
             return 0;
