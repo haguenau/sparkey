@@ -41,7 +41,7 @@ static void usage() {
           "  writehash - Generate a hash file from a log file.\n"
           "  createlog - Create an empty log file.\n"
           "  appendlog - Append key-value pairs to an existing log file.\n"
-          "  appendbin - Append cdb format to an existing log file.\n"
+          "  appendbin - Append cdb-formatted file to an existing log file.\n"
           "  rewrite   - Rewrite an existing log/index file pair, "
           "trimming away all replaced entries and "
           "possibly changing the compression format.\n"
