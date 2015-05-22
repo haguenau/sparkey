@@ -263,6 +263,8 @@ put_fail:
    reads from file descriptor STDIN_FILENO. */
 static int appendbin(sparkey_logwriter *writer) {
     sparkey_returncode returncode;
+    char *format_failure_reason = "(unknown)";
+
     struct stat stat;
     if (fstat(STDIN_FILENO, &stat) != 0) goto stat_fail;
 
@@ -271,10 +273,81 @@ static int appendbin(sparkey_logwriter *writer) {
     if (input == MAP_FAILED) goto mmap_fail;
 
 
-      // Write to log
-      // TRY(sparkey_logwriter_put(writer, strlen(key), (uint8_t*)key, strlen(value), (uint8_t*)value), put_fail);
-    TRY(sparkey_logwriter_put(writer, 0, input, 0, input), put_fail);
-    return 0;
+    /* Plan: Until EOF:
+       - check +
+       - parse integer for key length
+       - check ,
+       - parse integer for value length
+       - check :
+       - check bounds
+       - check for ->
+       - check for \n
+       - write record
+     */
+    size_t record_start = 0, value_start, key_start;
+    size_t key_length = 0, value_length = 0;
+
+    value_start = key_start = value_length = key_length = 1;
+    while (1) {
+        if (input[record_start] == '\n' && record_start == length - 1) {
+            return 0;
+        } else if (input[record_start] != '+') {
+            format_failure_reason = "+";
+            goto format_fail;
+        }
+
+        unsigned char *end;
+        unsigned char *start = input + record_start + 1;
+        /* FIXME: unsafe. */
+        key_length = strtol((const char *)start, (char **)&end, 10);
+
+        start += end - start;   /* Skip key length. */
+
+        if (*start != ',') {
+            format_failure_reason = ",";
+            goto format_fail;
+        }
+
+        ++start;                /* Skip , */
+        /* FIXME: unsafe. */
+        value_length = strtol((const char *)start, (char **)&end, 10);
+
+        start += end - start;   /* Skip value length. */
+        if (*start != ':') {
+            format_failure_reason = ":";
+            goto format_fail;
+        }
+
+        ++start;                /* Skip : */
+        record_start = start - input;
+
+        size_t record_end = record_start + key_length + 2 + value_length + 1;
+        if (record_end > length) {
+            format_failure_reason = "out of bounds";
+            goto format_fail;
+        }
+
+        if (input[record_start + key_length] != '-'
+            || input[record_start + key_length + 1] != '>') {
+            format_failure_reason = "->";
+            goto format_fail;
+        }
+
+        if (input[record_end - 1] != '\n') {
+            format_failure_reason = "\\n";
+            goto format_fail;
+        }
+
+        TRY(sparkey_logwriter_put(writer,
+                                  key_length,
+                                  input + record_start,
+                                  value_length,
+                                  input + record_start + key_length + 1),
+            put_fail);
+
+        record_start = record_end;
+    }
+    return 1;                   /* This should be unreachable. */
 
 stat_fail:
   fprintf(stderr, "Could not stat stdin, aborting.\n");
@@ -284,8 +357,9 @@ mmap_fail:
   fprintf(stderr, "Could not mmap stdin, aborting.\n");
   return 1;
 
-split_fail:
-  fprintf(stderr, "Could not split input line, aborting.\n");
+format_fail:
+  fprintf(stderr, "Incorrectly formatted input (%s at %zu), aborting.\n",
+          format_failure_reason, record_start);
   return 1;
 
 put_fail:
