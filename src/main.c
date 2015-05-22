@@ -40,6 +40,7 @@ static void usage() {
   fprintf(stderr, "  writehash - Generate a hash file from a log file.\n");
   fprintf(stderr, "  createlog - Create an empty log file.\n");
   fprintf(stderr, "  appendlog - Append key-value pairs to an existing log file.\n");
+  fprintf(stderr, "  appendbin - Append cdb format to an existing log file.\n");
   fprintf(stderr, "  rewrite   - Rewrite an existing log/index file pair, "
                                 "trimming away all replaced entries and "
                                 "possibly changing the compression format.\n");
@@ -83,6 +84,17 @@ static void usage_appendlog() {
   fprintf(stderr, "  <key> <delimiter> <value> <newline>\n");
   fprintf(stderr, "Options:\n");
   fprintf(stderr, "  -d <char>  Delimiter char to split input records on [default: TAB]\n");
+}
+
+static void usage_appendbin() {
+  fprintf(stderr,
+          "Usage: sparkey appendbin [-d <char>] <file.spl>\n"
+          "  Append data from STDIN to a log file with settings.\n"
+          "  data must be formatted as a sequence of\n"
+          "  +<kl>,<vl>:<k>->v<newline>\n"
+          "  where <kl> is the key length in ASCII decimal,\n"
+          "  and <vl> is the value length. End of input is marked as\n"
+          "  an extra newline (the file ends with \"\\n\\n\").\n");
 }
 
 static void usage_rewrite() {
@@ -366,9 +378,77 @@ int main(int argc, char * const *argv) {
         return 1;
       }
     }
+  } else if (strcmp(command, "appendlog") == 0) {
+    opterr = 0;
+    optind = 2;
+    int opt_char;
+    char delimiter = '\t';
+    while ((opt_char = getopt (argc, argv, "d:")) != -1) {
+      switch (opt_char) {
+      case 'd':
+        if (strlen(optarg) != 1) {
+          fprintf(stderr, "delimiter must be one character, but was '%s'\n", optarg);
+          return 1;
+        }
+        delimiter = optarg[0];
+        break;
+      case '?':
+        if (optopt == 'd') {
+          fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+        } else if (isprint(optopt)) {
+          fprintf(stderr, "Unknown option '-%c'.\n", optopt);
+        } else {
+          fprintf(stderr, "Unknown option character '\\x%x'.\n", optopt);
+        }
+        return 1;
+      default:
+        fprintf(stderr, "Unknown option parsing failure\n");
+        return 1;
+      }
+    }
 
     if (optind >= argc) {
       usage_appendlog();
+      return 1;
+    }
+
+    const char *log_filename = argv[optind];
+    sparkey_logwriter *writer;
+    assert(sparkey_logwriter_append(&writer, log_filename));
+    int rc = append(writer, delimiter, stdin);
+    assert(sparkey_logwriter_close(&writer));
+    return rc;
+  } else if (strcmp(command, "appendbin") == 0) {
+    opterr = 0;
+    optind = 2;
+    int opt_char;
+    char delimiter = '\t';
+    while ((opt_char = getopt (argc, argv, "d:")) != -1) {
+      switch (opt_char) {
+      case 'd':
+        if (strlen(optarg) != 1) {
+          fprintf(stderr, "delimiter must be one character, but was '%s'\n", optarg);
+          return 1;
+        }
+        delimiter = optarg[0];
+        break;
+      case '?':
+        if (optopt == 'd') {
+          fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+        } else if (isprint(optopt)) {
+          fprintf(stderr, "Unknown option '-%c'.\n", optopt);
+        } else {
+          fprintf(stderr, "Unknown option character '\\x%x'.\n", optopt);
+        }
+        return 1;
+      default:
+        fprintf(stderr, "Unknown option parsing failure\n");
+        return 1;
+      }
+    }
+
+    if (optind >= argc) {
+      usage_appendbin();
       return 1;
     }
 
