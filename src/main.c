@@ -257,6 +257,41 @@ put_fail:
   return 1;
 }
 
+static int appendbin(sparkey_logwriter *writer, char delimiter, FILE *input) {
+  char *line = NULL;
+  char *key = NULL;
+  char *value = NULL;
+  size_t size = 0;
+  sparkey_returncode returncode;
+  char delim[2];
+  delim[0] = delimiter;
+  delim[1] = '\0';
+
+  for (size_t end = read_line(&line, &size, input); line[end] == '\n'; end = read_line(&line, &size, input)) {
+    // Split on the first delimiter
+    key = strtok(line, delim);
+    value = strtok(NULL, "\n");
+    if (value != NULL) {
+      // Write to log
+      TRY(sparkey_logwriter_put(writer, strlen(key), (uint8_t*)key, strlen(value), (uint8_t*)value), put_fail);
+    } else {
+      goto split_fail;
+    }
+  }
+
+  free(line);
+  return 0;
+
+split_fail:
+  free(line);
+  fprintf(stderr, "Cannot split input line, aborting early.\n");
+  return 1;
+put_fail:
+  free(line);
+  fprintf(stderr, "Cannot append line to log file, aborting early: %s\n", sparkey_errstring(returncode));
+  return 1;
+}
+
 int main(int argc, char * const *argv) {
   if (argc < 2) {
     usage();
@@ -457,7 +492,7 @@ int main(int argc, char * const *argv) {
     const char *log_filename = argv[optind];
     sparkey_logwriter *writer;
     assert(sparkey_logwriter_append(&writer, log_filename));
-    int rc = append(writer, delimiter, stdin);
+    int rc = appendbin(writer, delimiter, stdin);
     assert(sparkey_logwriter_close(&writer));
     return rc;
   } else if (strcmp(command, "rewrite") == 0) {
